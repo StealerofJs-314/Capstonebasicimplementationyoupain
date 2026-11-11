@@ -107,9 +107,7 @@ def submit_request(requester_id, requester_name):
         return
 
     Schedule_event.all_events.append(event)
-    #print("Room request submitted. Waiting for approval...")
-    #event.approve(-1)
-    #print("Simulated notification: Your event request has been approved.")
+    print("Room request submitted and is waiting for admin approval.")
     return
 
 
