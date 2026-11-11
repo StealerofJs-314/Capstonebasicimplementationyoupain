@@ -1,4 +1,4 @@
-import equipment_mananger
+import equipment_manager
 
 
 
@@ -16,7 +16,7 @@ def when_called():
             print("--------------")
             print("Logging Out...\n")
         elif response == 1:
-            equipment_mananger.when_called()
+            equipment_manager.when_called()
         else:
             print("Invalid option. Please choose 0 or 1.")
 
