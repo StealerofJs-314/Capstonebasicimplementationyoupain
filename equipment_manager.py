@@ -19,7 +19,7 @@ def clear_output():
 
 
 #The entry point from the staff menu. Displays the Equipment Manager's menu.
-def when_called(id = -1):
+def when_called(id = -1, staffID = []):    
     clear_output()
     
     response = -1
@@ -49,9 +49,9 @@ def when_called(id = -1):
             clear_output()
             Inspect_Equipment()
         elif response == 3:
-            print("Buying Equipment")
+            Buy_Equipment()
         elif response == 4:
-            print("Selling Equipment")
+            Sell_Equipment()
         else:
             print("Invalid option. Please choose 0, 1, 2, 3, 4\n")
 
@@ -150,23 +150,14 @@ def Inspect_Equipment():
         if response == 0:
             clear_output()
             break
-        #clean
         elif response == 1:
             Clean_Equipment()
         elif response == 2:
             Repair_Equipment()
         elif response == 3:
             Dispose_Equipment()
-        elif response == 4:
-            #update entry
-            pass
-    #options:
-    # broken
-    #   -> dispose()
-    #       -> 
-    # update
-    #   -> update the information in the system
-
+        else:
+            print("Invalid Option.")
     return
 #----------
 
@@ -252,7 +243,7 @@ def Dispose_Equipment():
     for eq in Equipment.all_equipment:
         if eq.status == Equipment.EquipmentStatus.BROKEN:
             broken.append(eq)
-    if len(broken == 0):
+    if len(broken) == 0:
         print("No broken equipment.")
     else:
         index = -1
@@ -285,14 +276,45 @@ def Dispose_Equipment():
 #----------
 
 
-def Buy_Equipment():
-    #go through the process of adding equipment to the system.
-
-
-
-    #self.id = ID              #ID of the equipment
-    #self.name = Name          #Name of the equipment
-    #        self.description = Desc   #Description of the equipment
-    #        self.status = EquipmentStatus.IN_STORAGE
+#update the entry of an equipment
+def Update_Equipment():
 
     return
+#----------
+
+
+def Buy_Equipment():
+    #go through the process of adding equipment to the system.
+    print("Buying new equipment...")
+    name = input("Enter new equipment name: ")
+    description = input("Enter new equipment description: ")
+    id = Equipment.all_equipment[len(Equipment.all_equipment) - 1].id + 1
+
+    Equipment.all_equipment.append(
+        Equipment(id, name, description)
+    )
+    return
+#----------
+
+
+def Sell_Equipment():
+    index = -1
+    while index != 0:
+        try:
+            print("Choose an equipment to sell:")
+            print("0. Back")
+            for i in range(0, len(Equipment.all_equipment)):
+                print(f"{i+1:<3} | {Equipment.all_equipment[i].name:<15} | {Equipment.all_equipment[i].description:<70}")
+            index = int(input("Enter a number: "))
+        except ValueError:
+            print("Please enter a valid number")
+        if input == 0:
+            clear_output()
+            break
+        elif index > 0 and index < len(Equipment.all_equipment):
+            Equipment.all_equipment.remove(Equipment.all_equipment[index - 1])
+            break
+        else:
+            print("Invalid Option.")
+    return
+#----------

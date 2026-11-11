@@ -36,7 +36,7 @@ class Equipment:
         self.id = ID              #ID of the equipment
         self.name = Name          #Name of the equipment
         self.description = Desc   #Description of the equipment
-        self.status = EquipmentStatus.CLEANING
+        self.status = EquipmentStatus.IN_STORAGE
         self.assigned = 0      #userID that currently has the equipment
     #----------
 
