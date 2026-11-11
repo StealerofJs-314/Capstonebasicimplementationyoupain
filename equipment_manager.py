@@ -19,7 +19,7 @@ def clear_output():
 
 
 #The entry point from the staff menu. Displays the Equipment Manager's menu.
-def when_called():
+def when_called(id = -1):
     clear_output()
     
     response = -1
@@ -155,20 +155,12 @@ def Inspect_Equipment():
             Clean_Equipment()
         elif response == 2:
             Repair_Equipment()
-            pass
         elif response == 3:
-            #dispose
-            pass
+            Dispose_Equipment()
         elif response == 4:
             #update entry
             pass
     #options:
-    # repair
-    #   -> sell() [not worth repairing] -> sold
-    #   -> inspect() [beyond repair] -> broken
-    # clean
-    #   -> inspect() [repair needed] -> 
-    #   -> inspect() [not repairble] -> broken
     # broken
     #   -> dispose()
     #       -> 
@@ -267,17 +259,26 @@ def Dispose_Equipment():
         while index != 0:
             try:
                 print("Choose an equipment to dispose of:")
-
-
-
-                index = int(input("Enter a number"))
+                print("0. Back")
+                if len(broken) > 0:
+                    for i in range(0, len(broken)):
+                        print(i + 1,".",broken[i].name)
+                    index = int(input("Enter a number: "))
+                else:
+                    clear_output()
+                    print("All broken equipment disposed of.")
+                    break
             except ValueError:
                 print("Please enter a valid number")
             if input == 0:
                 clear_output()
                 break
             elif index > 0 and index < len(broken) + 1:
-                pass
+                for eq in Equipment.all_equipment:
+                    if eq.status == Equipment.EquipmentStatus.BROKEN:
+                        Equipment.all_equipment.remove(eq)
+                        broken.remove(eq)
+                        break
             else:
                 print("Invalid Option.")
     return
