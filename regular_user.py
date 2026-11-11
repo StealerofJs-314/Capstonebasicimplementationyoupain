@@ -3,7 +3,7 @@ from datetime import datetime
 import Schedule_event
 
 
-def when_called():
+def when_called(id=-1, requester_name=""):
     while True:
         print("\nRegular User Dashboard")
         print("0. Log Out")
@@ -20,7 +20,7 @@ def when_called():
             print("Logging Out...\n")
             return
         elif response == 1:
-            search_room()
+            search_room(id, requester_name)
         elif response == 2:
             view_upcoming_events()
         elif response == 3:
@@ -29,12 +29,12 @@ def when_called():
             print("Invalid option. Please choose 0, 1, 2, or 3.")
 
 
-def search_room():
-    Schedule_event.search_rooms()
+def search_room(requester_id, requester_name):
+    #Schedule_event.search_rooms()
     while True:
         response = input("Would you like to submit a room request? (y/n): ").strip().lower()
         if response == "y":
-            submit_request()
+            submit_request(requester_id, requester_name)
             return
         elif response == "n":
             return
@@ -62,21 +62,27 @@ def read_number(prompt):
         print("Please enter a positive number.")
 
 
-def submit_request():
+def submit_request(requester_id, requester_name):
     name = read_text("Event name: ")
-    requester = read_text("Requester name: ")
-    requester_id = read_number("Requester ID: ")
     building = read_text("Building: ")
     room = read_number("Room number: ")
 
     while True:
-        event_date = read_text("Event date (YYYY-MM-DD): ")
+        event_date = read_text("Event date (YYYY-MM-DD, e.g. 2026-12-26): ")
+        try:
+            parsed_date = datetime.strptime(event_date, "%Y-%m-%d").date()
+        except ValueError:
+            print("Please enter a valid date in YYYY-MM-DD format (year-month-day).")
+            continue
+
         event_time = read_text("Event time (HH:MM, 24-hour): ")
         try:
-            event_datetime = datetime.strptime(event_date + " " + event_time, "%Y-%m-%d %H:%M")
+            parsed_time = datetime.strptime(event_time, "%H:%M").time()
         except ValueError:
-            print("Please enter a valid date and time.")
+            print("Please enter a valid time in 24-hour HH:MM format, such as 14:30.")
             continue
+
+        event_datetime = datetime.combine(parsed_date, parsed_time)
         if event_datetime <= datetime.now():
             print("Please enter a future date and time.")
             continue
@@ -90,7 +96,7 @@ def submit_request():
         building=building,
         room=room,
         name=name,
-        requester=requester,
+        requester=requester_name,
         requesterID=requester_id,
     )
     is_valid, reasons = event.submit()
@@ -101,9 +107,7 @@ def submit_request():
         return
 
     Schedule_event.all_events.append(event)
-    print("Room request submitted. Waiting for approval...")
-    event.approve(-1)
-    print("Simulated notification: Your event request has been approved.")
+    print("Room request submitted and is waiting for admin approval.")
     return
 
 

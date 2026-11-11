@@ -9,9 +9,13 @@ class Approval_Status(Enum):
     IN_PROGRESS=4
 
 class Schedule_event():
+    _next_event_id = 0
 
     def __init__(self, time=-1, day_date=-1, day_month=-1, day_year=-1,
-                 building="", room=-1, name="", requester = "",requesterID= -1):
+                 building="", room=-1, name="", requester="", requesterID=-1,
+                 equipment_ids=None):
+        self.event_id = Schedule_event._next_event_id
+        Schedule_event._next_event_id += 1
         self.time = time
         self.day_date = day_date
         self.day_month = day_month
@@ -21,6 +25,7 @@ class Schedule_event():
         self.name = name
         self.requester = requester
         self.requesterID = requesterID
+        self.equipment_ids = list(equipment_ids) if equipment_ids is not None else []
         self.approved = Approval_Status.IN_PROGRESS
         self.approved_or_denied_by_id = -1
 
@@ -70,6 +75,7 @@ class Schedule_event():
             return ""
 
         fields = (
+            ("Event ID", self.event_id),
             ("Name", self.name),
             ("Time", self.time),
             ("Day", self.day_date),
@@ -102,25 +108,32 @@ def get_events_by_staff_id(all_events, staff_ID):
         for event in all_events
         if staff_ID in event.staff_assigned
     ]
-    
 
+
+def get_requested_events(all_events):
+    return [
+        event
+        for event in all_events
+        if event.approved == Approval_Status.REQUESTED
+    ]
+    
 
 
 all_events = [
     Schedule_event(
         time="09:00", day_date=12, day_month=11, day_year=2026,
         building="Main", room=101, name="Club Meeting",
-        requester="Alex", requesterID=1001,
+        requester="Alex", requesterID=1001, equipment_ids=[1],
     ),
     Schedule_event(
         time="13:30", day_date=14, day_month=11, day_year=2026,
         building="Arts", room=204, name="Art Workshop",
-        requester="Alex", requesterID=1001,
+        requester="Alex", requesterID=1001, equipment_ids=[2],
     ),
     Schedule_event(
         time="10:00", day_date=16, day_month=11, day_year=2026,
         building="Science", room=12, name="Science Fair",
-        requester="Sam", requesterID=1003,
+        requester="Sam", requesterID=1003, equipment_ids=[3],
     ),
     Schedule_event(
         time="15:00", day_date=18, day_month=11, day_year=2026,
@@ -130,7 +143,7 @@ all_events = [
     Schedule_event(
         time="11:00", day_date=20, day_month=11, day_year=2026,
         building="Gym", room=1, name="Basketball Practice",
-        requester="Morgan", requesterID=1005,
+        requester="Morgan", requesterID=1005, equipment_ids=[4],
     ),
 ]
 
@@ -139,6 +152,8 @@ all_events[0].add_staff(21)
 all_events[1].add_staff(22)
 all_events[2].add_staff(4)
 
-all_events[0].approve(1)
-all_events[1].approve(2)
-all_events[4].denied(1)
+all_events[2].submit()
+all_events[3].submit()
+all_events[0].approve(9001)
+all_events[1].approve(9002)
+all_events[4].denied(9001)
