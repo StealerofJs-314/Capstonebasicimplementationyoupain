@@ -102,8 +102,15 @@ def get_events_by_staff_id(all_events, staff_ID):
         for event in all_events
         if staff_ID in event.staff_assigned
     ]
-    
 
+
+def get_requested_events(all_events):
+    return [
+        event
+        for event in all_events
+        if event.approved == Approval_Status.REQUESTED
+    ]
+    
 
 
 all_events = [
@@ -142,3 +149,4 @@ all_events[2].add_staff(4)
 all_events[0].approve(1)
 all_events[1].approve(2)
 all_events[4].denied(1)
+

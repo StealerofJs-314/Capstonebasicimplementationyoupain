@@ -3,7 +3,7 @@ import equipment_manager
 
 
 
-def when_called():
+def when_called(id = -1):
     response = -1
     while response != 0:
         #gives the user the menu for logging out or going to the equipment manager menu

@@ -21,7 +21,7 @@ def clear_output():
 
 
 #The entry point from the staff menu. Displays the Equipment Manager's menu.
-def when_called():
+def when_called(id = -1):
     clear_output()
     
     response = -1

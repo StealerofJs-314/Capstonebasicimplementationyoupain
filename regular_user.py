@@ -3,7 +3,7 @@ from datetime import datetime
 import Schedule_event
 
 
-def when_called():
+def when_called(id = -1):
     while True:
         print("\nRegular User Dashboard")
         print("0. Log Out")
