@@ -152,6 +152,8 @@ all_events[0].add_staff(21)
 all_events[1].add_staff(22)
 all_events[2].add_staff(4)
 
+all_events[2].submit()
+all_events[3].submit()
 all_events[0].approve(9001)
 all_events[1].approve(9002)
 all_events[4].denied(9001)

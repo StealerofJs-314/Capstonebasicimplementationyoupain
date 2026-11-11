@@ -30,6 +30,7 @@ users = [
     User(4, "regular_staff_4", "password", [4], "staff"),
     User(11, "security_staff_11", "password", [11], "staff"),
     User(22, "cleaning_staff_22", "password", [22], "staff"),
+    User(31, "security_equipment", "password", [13, 31], "staff"),
     User(9001, "admin1", "password", role="admin"),
     User(9002, "admin2", "password", role="admin"),
 ]
@@ -54,4 +55,4 @@ while True:
     elif user.role == "admin":
         admin.when_called(user.id)
     elif user.role == "staff":
-        staff.when_called(user.id)
+        staff.when_called(user.id, user.staff_id)

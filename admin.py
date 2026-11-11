@@ -35,7 +35,8 @@ def when_called(id = -1):
             except ValueError:
                 print("Please enter a valid event ID.")
                 continue
-
+            if event_id == 0:
+                continue
             event_to_approve = next(
                 (event for event in requested_events if event.event_id == event_id),
                 None,
