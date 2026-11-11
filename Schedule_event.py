@@ -58,7 +58,7 @@ class Schedule_event():
 
         return not reasons, reasons
     def submit(self):
-        is_valid, reasons = self.valid(self)
+        is_valid, reasons = self.valid()
         if not is_valid:
             return is_valid, reasons
         self.approved = Approval_Status.REQUESTED
@@ -89,6 +89,11 @@ class Schedule_event():
 
 def sort_events_by_requester_id(all_events):
     return sorted(all_events, key=lambda event: event.requesterID)
+
+# TODO: Implement ts
+def search_rooms():
+    print("Room search needs to be implemented.")
+    return
 
 
 def get_events_by_staff_id(all_events, staff_ID):
