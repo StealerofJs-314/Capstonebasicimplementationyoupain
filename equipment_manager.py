@@ -1,4 +1,4 @@
-#----------
+#------------
 #Equipment_Manager.py
 #==========
 # * Defines the functions for the role of the equipment manager

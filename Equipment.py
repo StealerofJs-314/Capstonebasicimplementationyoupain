@@ -1,6 +1,6 @@
-#----------
+#------------
 #Equipment.py
-#==========
+#============
 #  * Defines equipment in the sytem and the functions to request it
 #----------
 
