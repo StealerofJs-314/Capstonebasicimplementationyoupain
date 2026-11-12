@@ -24,7 +24,7 @@ def when_called(id=-1, requester_name=""):
         elif response == 2:
             view_upcoming_events()
         elif response == 3:
-            view_requests()
+            view_requests(id)
         else:
             print("Invalid option. Please choose 0, 1, 2, or 3.")
 
@@ -99,6 +99,11 @@ def submit_request(requester_id, requester_name):
         requester=requester_name,
         requesterID=requester_id,
     )
+    conflict = Schedule_event.get_conflicting_event(Schedule_event.all_events, event)
+    if conflict is not None:
+        print("That room is already booked at that date and time. Request not submitted.")
+        return
+
     is_valid, reasons = event.submit()
     if not is_valid:
         print("Unable to submit the request:")
@@ -135,8 +140,8 @@ def view_upcoming_events():
     return
 
 
-def view_requests():
-    requester_id = read_number("Requester ID: ")
+def view_requests(requester_id):
+    #shows only the logged-in user's own requests
     print("\nRoom Requests")
     found = False
     for event in Schedule_event.all_events:

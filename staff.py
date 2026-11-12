@@ -17,6 +17,10 @@ def when_called(id=-1, staff_codes=None):
     if cleaning_id is not None:
         available_actions.append(("Cleaning", cleaning.when_called, cleaning_id))
 
+    security_id = next((code for code in staff_codes if 10 <= code < 20), None)
+    if security_id is not None:
+        available_actions.append(("Security", security.when_called, security_id))
+
     while True:
         print("\nStaff Dashboard")
         print("0. Log Out")
