@@ -29,7 +29,7 @@ class Schedule_event():
         self.approved = Approval_Status.IN_PROGRESS
         self.approved_or_denied_by_id = -1
 
-        self.staff_assigned = [] # singled digit for regular staff, 10s for security, 20s for cleaning, 30s for equipment_mananger
+        self.staff_assigned = [] # singled digit for regular staff, 10s for security, 30s for equipment_mananger
 
     def add_staff(self, Id):
         self.staff_assigned.append(Id)
@@ -148,8 +148,6 @@ all_events = [
 ]
 
 all_events[0].add_staff(11)
-all_events[0].add_staff(21)
-all_events[1].add_staff(22)
 all_events[2].add_staff(4)
 
 all_events[2].submit()
