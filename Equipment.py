@@ -94,6 +94,29 @@ all_equipment[1].status = EquipmentStatus.IN_USE
 all_equipment[2].status = EquipmentStatus.BROKEN
 all_equipment[3].status = EquipmentStatus.IN_REPAIR
 
+
+#Returns the equipment with the given ID, or None if it is not in the system.
+def Get_Equipment(equipID):
+    for eq in all_equipment:
+        if eq.id == equipID:
+            return eq
+    return None
+#----------
+
+#Returns the name of the equipment with the given ID.
+def Get_Equipment_Name(equipID):
+    eq = Get_Equipment(equipID)
+    if eq is None:
+        return "(removed)"
+    return eq.name
+#----------
+
+#Removes a piece of equipment from the system along with any pending requests for it.
+def Delete_Equipment(eq):
+    all_equipment.remove(eq)
+    all_requests[:] = [req for req in all_requests if req.equipID != eq.id]
+#----------
+
 #==============================
 #Class representing an equipment request
 # Vars:
@@ -107,11 +130,14 @@ class EquipmentRequest:
         self.reason = reason
     #----------
 
-    def Add_Equipment_Request(userID, equipID):
-        if all_equipment[equipID].status != 0 or all_equipment[equipID].status != 1:
+    def Add_Equipment_Request(userID, equipID, reason = ""):
+        #equipment can only be requested while it is in storage or reserved
+        available = (EquipmentStatus.IN_STORAGE, EquipmentStatus.RESERVED)
+        eq = Get_Equipment(equipID)
+        if eq is None or eq.status not in available:
             print("We're sorry. That is not available at this time.")
         else:
-            all_requests.append(EquipmentRequest(userID, equipID))
+            all_requests.append(EquipmentRequest(userID, equipID, reason))
 
         return
     #----------
@@ -119,8 +145,10 @@ class EquipmentRequest:
     def Aproove_EquipmentRequest(requestID):
         """Aproove a user's request for equipment for their event"""
         #updates the associated equipment to be IN_USE and assigned to the requesting userID
-        all_equipment[all_requests[requestID].equipID].status = EquipmentStatus.IN_USE
-        all_equipment[all_requests[requestID].equipID].assigned = all_requests[requestID].userID
+        eq = Get_Equipment(all_requests[requestID].equipID)
+        if eq is not None:
+            eq.status = EquipmentStatus.IN_USE
+            eq.assigned = all_requests[requestID].userID
         #removes the request from the list
         all_requests.__delitem__(requestID)
         print("Request aprooval notification sent.")
@@ -141,20 +169,28 @@ class EquipmentRequest:
 def Query_Equipment_Requests():
     #basically a selection over a join of the Equipment_Reservations and Schedule_Event tables
     lenOfOutput = 3 + 6 + 15 + 15 + 6 + 10 + 20 + 6 + 15 + 21 + (3 * 9) #each header + column spacing = 144
-    counter = 0
     print(f"{'EQUIPMENT REQUESTS':^144}")
     print('-' * lenOfOutput)
     print(f"{'':<3} | {'userID':^6} | {'Username':^15} | {'Event Name':^15} | {'Time':^6} | {'Event Date':^10} | {'Building':^20} | {'Room':^6} | {'Equipment Name':^15} | {'Equipment Description':^21}")
     print('-' * lenOfOutput)
     if len(all_requests) > 0:
-        for req in all_requests:
+        #row numbers start at 1 so they match the approve/deny menus
+        for counter, req in enumerate(all_requests, start=1):
+            eq = Get_Equipment(req.equipID)
+            eq_name = eq.name if eq is not None else "(removed)"
+            eq_desc = eq.description if eq is not None else ""
+            matched = False
+            #find the requesting user's event that uses this equipment
             for event in Schedule_event.all_events:
-                if req.userID == event.requesterID:
-    #problem: This returns the first matching event information even if the equipment does not match
-                    print(f"{counter:^3} | {req.userID:^6} | {event.requester:^15} | {event.name:^15} | {event.time:>6} | {event.day_month:>2}/{event.day_date:>2}/{event.day_year:>4} | {event.building:^20} | {event.room:^6} | {all_equipment[req.equipID].name:^15} | {all_equipment[req.equipID].description:<21}")
+                if req.userID == event.requesterID and req.equipID in event.equipment_ids:
+                    matched = True
+                    print(f"{counter:^3} | {req.userID:^6} | {event.requester:^15} | {event.name:^15} | {event.time:>6} | {event.day_month:>2}/{event.day_date:>2}/{event.day_year:>4} | {event.building:^20} | {event.room:^6} | {eq_name:^15} | {eq_desc:<21}")
                     print('-' * lenOfOutput)
-                    counter += 1
-                break
+                    break
+            #no matching event: still show the request so it can be approved or denied
+            if not matched:
+                print(f"{counter:^3} | {req.userID:^6} | {'-':^15} | {req.reason:^15} | {'-':>6} | {'-':^10} | {'-':^20} | {'-':^6} | {eq_name:^15} | {eq_desc:<21}")
+                print('-' * lenOfOutput)
     elif len(all_requests) == 0:
         print(f"{'No pending requests...':^144}")
     return
@@ -163,7 +199,7 @@ def Query_Equipment_Requests():
 #The list of all pending equipment requests.
 all_requests = [
     EquipmentRequest(
-        Schedule_event.all_events[1].requesterID, 1, Schedule_event.all_events[1].name
+        Schedule_event.all_events[1].requesterID, 2, Schedule_event.all_events[1].name   #equipment ID 2 = Kiln
     )
 ]
 """The list of all pending equipment requests."""

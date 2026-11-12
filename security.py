@@ -38,10 +38,7 @@ def list_requests():
     for req in security_requests_list:
         print(f"Event ID: {req.ID}")
         print(f"Number of personel: {req.num_pers}")
-        if req.start_time < 1000:
-            print(f"Start time: 0{req.start_time}hrs")
-        else:
-            print(f"Start time: {req.start_time}hrs")
+        print(f"Start time: {req.start_time:04d}hrs")
         print(f"Event Duration: {req.duration}")
 
 class sec_personel:
@@ -59,7 +56,7 @@ security_personel_list = [
 ]
 
 def list_personel():
-    for pers in security_requests_list:
+    for pers in security_personel_list:
         print(f"Employee ID: {pers.ID}")
         print(f"Employee Name: {pers.name}")
         print(f"Employee Rank: {pers.rank}")
@@ -68,18 +65,19 @@ def list_personel():
 
 def new_sec_request():
     print("Input the requested information in order to register a new event wich needs security")
-    event_ID = int(input("EVENT ID: "))
-    num_officers = int(input("NUMBER OF OFFICERS: "))
-    start_time = int(input("EVENT START TIME (24hr clock, omit leading zero and colon, e.g. 08:00 -> 800): "))
-    duration = int(input("EVENT DURATION(in hrs): "))
+    try:
+        event_ID = int(input("EVENT ID: "))
+        num_officers = int(input("NUMBER OF OFFICERS: "))
+        start_time = int(input("EVENT START TIME (24hr clock, omit leading zero and colon, e.g. 08:00 -> 800): "))
+        duration = int(input("EVENT DURATION(in hrs): "))
+    except ValueError:
+        print("Please enter a valid number. No security request created.")
+        return
 
-    security_requests_list.append(sec_request [event_ID, num_officers, start_time, duration])
+    security_requests_list.append(sec_request(event_ID, num_officers, start_time, duration))
 
     print("NEW SECURITY EVENENT CREATED")
     print(f"Event ID: {event_ID}")
     print(f"Number of personel: {num_officers}")
-    if start_time < 1000:
-        print(f"Start time: 0{start_time}hrs")
-    else:
-        print(f"Start time: {start_time}hrs")
+    print(f"Start time: {start_time:04d}hrs")
     print(f"Event Duration: {duration}")

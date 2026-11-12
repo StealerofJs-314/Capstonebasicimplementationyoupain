@@ -29,7 +29,7 @@ def read_int(prompt):
 
 
 #The entry point from the staff menu. Displays the cleaning staff's menu.
-def when_called():
+def when_called(id = -1):
     clear_output()
 
     response = -1
@@ -79,8 +79,7 @@ def get_cleaning_queue():
 
 #True if the equipment has a pending reservation request.
 def has_upcoming_reservation(item):
-    index = Equipment.all_equipment.index(item)
-    return any(request.equipID == index for request in Equipment.all_requests)
+    return any(request.equipID == item.id for request in Equipment.all_requests)
 
 
 

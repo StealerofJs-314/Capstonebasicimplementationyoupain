@@ -35,6 +35,7 @@ def when_called(id = -1, staffID = []):
             response = int(input("Enter a number: "))
         except ValueError:
             print("Please enter a valid number.")
+            continue
 
         if response == 0:
             print("Exiting to Staff Dashboard")
@@ -73,6 +74,7 @@ def Check_Reservations():
             response = int(input("Enter a number: "))
         except ValueError:
             print("Please enter a valid number.")
+            continue
         if response == 0:
             clear_output()
             break
@@ -87,10 +89,11 @@ def Check_Reservations():
                         print("Choose a request to aproove:")
                         print("0. Back")
                         for i in range(0, len(Equipment.all_requests)):
-                            print(i + 1, ". ", Equipment.all_equipment[Equipment.all_requests[i].equipID].name, "for: ", Equipment.all_requests[i].reason)
+                            print(i + 1, ". ", Equipment.Get_Equipment_Name(Equipment.all_requests[i].equipID), "for: ", Equipment.all_requests[i].reason)
                         index = int(input("Enter a number: "))
                     except ValueError:
                         print("\nPlease enter a valid number.")
+                        continue
                     if index == 0:
                         break
                     elif index > 0 and index < len(Equipment.all_requests) + 1:
@@ -112,10 +115,11 @@ def Check_Reservations():
                         print("Choose a request to deny")
                         print("0. Back")
                         for i in range(0, len(Equipment.all_requests)):
-                            print(i + 1, ". ", Equipment.all_equipment[Equipment.all_requests[i].equipID].name, "for: ", Equipment.all_requests[i].reason)
+                            print(i + 1, ". ", Equipment.Get_Equipment_Name(Equipment.all_requests[i].equipID), "for: ", Equipment.all_requests[i].reason)
                         index = int(input("Enter a number: "))
                     except ValueError:
                         print("\nPlease enter a valid number.")
+                        continue
                     if index == 0:
                         break
                     elif index > 0 and index < len(Equipment.all_requests) + 1:
@@ -147,6 +151,7 @@ def Inspect_Equipment():
             response = int(input("Enter a number: "))
         except ValueError:
             print("Please enter a valid number.")
+            continue
         if response == 0:
             clear_output()
             break
@@ -156,6 +161,8 @@ def Inspect_Equipment():
             Repair_Equipment()
         elif response == 3:
             Dispose_Equipment()
+        elif response == 4:
+            Update_Equipment()
         else:
             print("Invalid Option.")
     return
@@ -185,6 +192,7 @@ def Clean_Equipment():
                     break
             except ValueError:
                 print("Please enter a valid number.")
+                continue
             if index == 0:
                 clear_output()
                 break
@@ -223,6 +231,7 @@ def Repair_Equipment():
                     break
             except ValueError:
                 print("Please enter a valid number.")
+                continue
             if index == 0:
                 clear_output()
                 break
@@ -261,15 +270,15 @@ def Dispose_Equipment():
                     break
             except ValueError:
                 print("Please enter a valid number")
-            if input == 0:
+                continue
+            if index == 0:
                 clear_output()
                 break
             elif index > 0 and index < len(broken) + 1:
-                for eq in Equipment.all_equipment:
-                    if eq.status == Equipment.EquipmentStatus.BROKEN:
-                        Equipment.all_equipment.remove(eq)
-                        broken.remove(eq)
-                        break
+                #dispose of the chosen equipment (and any pending requests for it)
+                eq = broken[index - 1]
+                Equipment.Delete_Equipment(eq)
+                broken.remove(eq)
             else:
                 print("Invalid Option.")
     return
@@ -278,7 +287,38 @@ def Dispose_Equipment():
 
 #update the entry of an equipment
 def Update_Equipment():
+    clear_output()
+    if len(Equipment.all_equipment) == 0:
+        print("No equipment to update.")
+        return
 
+    index = -1
+    while index != 0:
+        try:
+            print("Choose an equipment to update:")
+            print("0. Back")
+            for i in range(0, len(Equipment.all_equipment)):
+                print(i + 1, ".", Equipment.all_equipment[i].name)
+            index = int(input("Enter a number: "))
+        except ValueError:
+            print("Please enter a valid number.")
+            continue
+        if index == 0:
+            clear_output()
+            break
+        elif index > 0 and index < len(Equipment.all_equipment) + 1:
+            eq = Equipment.all_equipment[index - 1]
+            name = input(f"New name (leave blank to keep '{eq.name}'): ").strip()
+            description = input("New description (leave blank to keep the current one): ").strip()
+            if name:
+                eq.name = name
+            if description:
+                eq.description = description
+            clear_output()
+            print(f"{eq.name} updated.\n")
+            break
+        else:
+            print("Invalid Option.")
     return
 #----------
 
@@ -288,10 +328,14 @@ def Buy_Equipment():
     print("Buying new equipment...")
     name = input("Enter new equipment name: ")
     description = input("Enter new equipment description: ")
-    id = Equipment.all_equipment[len(Equipment.all_equipment) - 1].id + 1
+    #next ID is one past the last equipment's ID (or 1 if there is no equipment)
+    if len(Equipment.all_equipment) > 0:
+        id = Equipment.all_equipment[len(Equipment.all_equipment) - 1].id + 1
+    else:
+        id = 1
 
     Equipment.all_equipment.append(
-        Equipment(id, name, description)
+        Equipment.Equipment(id, name, description)
     )
     return
 #----------
@@ -308,11 +352,13 @@ def Sell_Equipment():
             index = int(input("Enter a number: "))
         except ValueError:
             print("Please enter a valid number")
-        if input == 0:
+            continue
+        if index == 0:
             clear_output()
             break
-        elif index > 0 and index < len(Equipment.all_equipment):
-            Equipment.all_equipment.remove(Equipment.all_equipment[index - 1])
+        elif index > 0 and index < len(Equipment.all_equipment) + 1:
+            #sell the chosen equipment (and remove any pending requests for it)
+            Equipment.Delete_Equipment(Equipment.all_equipment[index - 1])
             break
         else:
             print("Invalid Option.")

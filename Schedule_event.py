@@ -9,7 +9,7 @@ class Approval_Status(Enum):
     IN_PROGRESS=4
 
 class Schedule_event():
-    _next_event_id = 0
+    _next_event_id = 1  # starts at 1 so 0 can be used as "cancel" in menus
 
     def __init__(self, time=-1, day_date=-1, day_month=-1, day_year=-1,
                  building="", room=-1, name="", requester="", requesterID=-1,
@@ -108,6 +108,24 @@ def get_events_by_staff_id(all_events, staff_ID):
         for event in all_events
         if staff_ID in event.staff_assigned
     ]
+
+
+def get_conflicting_event(all_events, new_event):
+    """Return an approved event booked in the same room at the same date and
+    time as new_event, or None if the room is free."""
+    for event in all_events:
+        if event is new_event or event.approved != Approval_Status.APPROVED:
+            continue
+        if (
+            str(event.building).strip().lower() == str(new_event.building).strip().lower()
+            and event.room == new_event.room
+            and event.day_year == new_event.day_year
+            and event.day_month == new_event.day_month
+            and event.day_date == new_event.day_date
+            and event.time == new_event.time
+        ):
+            return event
+    return None
 
 
 def get_requested_events(all_events):
