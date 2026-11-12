@@ -1,194 +1,78 @@
-#----------
-#cleaning.py
-#==========
-
-import os
-import time
-
-import Equipment
-
-
-#this is a helper function to clear the output (makes things easier to read)
-def clear_output():
-    if os.name == 'nt':
-        os.system('cls')
-    else:
-        os.system('clear')
-    return
+from display_service import display_equipment_list
+from equipment_models import EquipmentStatus
+from input_utils import pause, read_int
+from menu_utils import choose_option
+from query_service import (
+    get_equipment_by_status,
+    get_equipment_requests_for_item,
+)
+from equipment_service import set_equipment_status
 
 
-
-#Reads an integer from the user. Returns None if the input is not a number.
-def read_int(prompt):
-    try:
-        return int(input(prompt))
-    except ValueError:
-        print("Please enter a valid number.")
-        return None
-
-
-
-#The entry point from the staff menu. Displays the cleaning staff's menu.
-def when_called(id = -1):
-    clear_output()
-
-    response = -1
-    while response != 0:
-        print("Cleaning Dashboard\n")
-        print("Choose an option:")
-        print("0. Exit to Staff Dashboard")
-        print("1. View Equipment Needing Cleaning")
-        print("2. Mark Equipment Cleaned")
-        print("3. Inspect Equipment")
-
-        response = read_int("Enter a number: ")
-        if response is None:
-            response = -1
-            continue
-
-        if response == 0:
-            print("\nExiting to Staff Dashboard")
-            time.sleep(1)
-            clear_output()
-            break
-        elif response == 1:
-            clear_output()
-            View_Cleaning_Queue()
-        elif response == 2:
-            clear_output()
-            Mark_Cleaned()
-        elif response == 3:
-            clear_output()
-            Inspect_Equipment()
+def run_dashboard(staff_id):
+    options = {
+        0: "Exit to Staff Dashboard",
+        1: "View Equipment Needing Cleaning",
+        2: "Mark Equipment Cleaned",
+        3: "Inspect Equipment",
+    }
+    while True:
+        choice = choose_option("Cleaning Dashboard", options)
+        if choice == 0:
+            return
+        if choice == 1:
+            view_cleaning_queue()
+        elif choice == 2:
+            mark_equipment_cleaned()
         else:
-            print("Invalid option. Please choose 0, 1, 2, 3\n")
-
-    return
+            inspect_equipment()
 
 
-
-#Returns the equipment currently in the Cleaning state.
-def get_cleaning_queue():
-    return [
-        item
-        for item in Equipment.all_equipment
-        if item.status == Equipment.EquipmentStatus.CLEANING
-    ]
-
-
-
-#True if the equipment has a pending reservation request.
-def has_upcoming_reservation(item):
-    return any(request.equipID == item.id for request in Equipment.all_requests)
-
-
-
-#Prints the list of equipment waiting to be cleaned. Returns it.
-def print_queue(queue):
-    print(f"{'EQUIPMENT NEEDING CLEANING':^60}\n")
-    print(f"{'#':<3} | {'ID':<3} | {'Name':<15} | Description")
-    print('-' * 60)
-    for number, item in enumerate(queue, start=1):
-        print(f"{number:<3} | {item.id:<3} | {item.name:<15} | {item.description}")
-    print()
-
-
-
-#Lets the user pick one item from the cleaning queue. Returns it, or None.
-def choose_from_queue(queue):
-    print_queue(queue)
-    print("0. Cancel")
-    choice = read_int("\nWhich equipment? Select a number.")
-    if choice is None or choice < 1 or choice > len(queue):
+def choose_equipment(queue):
+    if not queue:
+        print("No equipment is available for this action.")
         return None
-    return queue[choice - 1]
-
-
-
-#Prints the equipment waiting to be cleaned.
-def View_Cleaning_Queue():
-    queue = get_cleaning_queue()
-
-    if not queue:
-        print("No equipment needs cleaning.")
-    else:
-        print_queue(queue)
-
-    pause()
-    return
-
-
-
-#Marks a piece of equipment as cleaned.
-#  [has upcoming reservation] -> Reserved
-#  [no upcoming reservation]  -> In Storage, notify equipment manager
-def Mark_Cleaned():
-    queue = get_cleaning_queue()
-
-    if not queue:
-        print("No equipment needs cleaning.")
-        pause()
-        return
-
-    item = choose_from_queue(queue)
+    display_equipment_list(queue)
+    item_id = read_int("Equipment ID (0 to cancel): ")
+    if item_id == 0:
+        return None
+    item = next((candidate for candidate in queue if candidate.id == item_id), None)
     if item is None:
-        print("No equipment cleaned.")
-        pause()
-        return
+        print("No equipment found with that ID.")
+    return item
 
-    item.assigned = 0  #it has been returned, so nobody is holding it anymore
 
-    if has_upcoming_reservation(item):
-        item.status = Equipment.EquipmentStatus.RESERVED
-        print(f"\n{item.name} is cleaned and reserved for its upcoming event.")
-    else:
-        item.status = Equipment.EquipmentStatus.IN_STORAGE
-        print(f"\n{item.name} is cleaned and back in storage.")
-        print("Equipment Manager Notification Sent")
-
+def view_cleaning_queue():
+    display_equipment_list(get_equipment_by_status(EquipmentStatus.CLEANING))
     pause()
-    return
 
 
-
-#Inspects a piece of equipment that is being cleaned.
-#  [repair needed] -> In Repair
-#  [not repairable] -> Broken
-def Inspect_Equipment():
-    queue = get_cleaning_queue()
-
-    if not queue:
-        print("No equipment needs cleaning.")
-        pause()
-        return
-
-    item = choose_from_queue(queue)
+def mark_equipment_cleaned():
+    item = choose_equipment(get_equipment_by_status(EquipmentStatus.CLEANING))
     if item is None:
-        print("No equipment inspected.")
-        pause()
         return
+    next_status = (
+        EquipmentStatus.RESERVED
+        if get_equipment_requests_for_item(item.id)
+        else EquipmentStatus.IN_STORAGE
+    )
+    set_equipment_status(item, next_status)
+    print(f"{item.name} cleaned and marked {next_status.name.lower()}.")
+    pause()
 
-    print(f"\nInspecting {item.name}")
-    print("0. Cancel")
-    print("1. Repair needed")
-    print("2. Not repairable")
-    result = read_int("Enter a number: ")
 
+def inspect_equipment():
+    item = choose_equipment(get_equipment_by_status(EquipmentStatus.CLEANING))
+    if item is None:
+        return
+    result = choose_option(
+        f"Inspecting {item.name}",
+        {0: "Cancel", 1: "Repair needed", 2: "Not repairable"},
+    )
     if result == 1:
-        item.status = Equipment.EquipmentStatus.IN_REPAIR
-        print(f"\n{item.name} sent to repair.")
-        print("Equipment Manager Notification Sent")
+        set_equipment_status(item, EquipmentStatus.IN_REPAIR)
+        print(f"{item.name} sent to repair.")
     elif result == 2:
-        item.status = Equipment.EquipmentStatus.BROKEN
-        print(f"\n{item.name} marked as broken.")
-        print("Equipment Manager Notification Sent")
-    else:
-        print("No changes made.")
-
+        set_equipment_status(item, EquipmentStatus.BROKEN)
+        print(f"{item.name} marked as broken.")
     pause()
-    return
-
-
-def pause():
-    input("\nPress Enter to continue...")
-    clear_output()

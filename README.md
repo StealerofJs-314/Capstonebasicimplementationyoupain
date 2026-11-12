@@ -1,10 +1,11 @@
-# Capstonebasicimplementationyoupain
+# Capstone
 
-Run the program with `python3 main.py` and select Regular User. The dashboard
-offers room search, upcoming events, room requests, and logout. Room search is
-not yet implemented; you can still enter the details of a room request.
+Run the application with `python main.py`. Test accounts are defined in
+`user_state.py`; they all use the password `password`.
 
-Requests are kept in memory only and can be viewed using the requester ID.
-Approval and the approval notification are simulated immediately after a
-request is submitted; no actual administrator approval or notification service
-is involved. Requests are lost when the program exits.
+The project separates event, equipment, user, staff, and security records into
+domain and state modules. Equipment reservations and staff assignments refer
+to events by event ID. Queries, display formatting, and common input/menu
+handling are shared services rather than duplicated in each dashboard.
+
+All records are stored in memory and reset when the application exits.

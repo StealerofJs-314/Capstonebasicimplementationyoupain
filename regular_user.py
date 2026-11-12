@@ -1,154 +1,84 @@
 from datetime import datetime
 
-import Schedule_event
+from display_service import display_events
+from event import Event
+from event_state import events
+from input_utils import read_future_datetime, read_positive_int, read_text
+from menu_utils import choose_option
+from query_service import (
+    get_approved_events,
+    get_conflicting_event,
+    get_events_by_requester,
+)
 
 
-def when_called(id=-1, requester_name=""):
+def run_dashboard(user_id, requester_name):
+    options = {
+        0: "Log Out",
+        1: "Submit an event request",
+        2: "View upcoming approved events",
+        3: "View my event requests",
+    }
     while True:
-        print("\nRegular User Dashboard")
-        print("0. Log Out")
-        print("1. Search Rooms and Submit a Request")
-        print("2. View Upcoming Events")
-        print("3. View Room Requests")
-        try:
-            response = int(input("Enter a number: "))
-        except ValueError:
-            print("Please enter a valid number.")
-            continue
-
-        if response == 0:
+        choice = choose_option("Regular User Dashboard", options)
+        if choice == 0:
             print("Logging Out...\n")
             return
-        elif response == 1:
-            search_room(id, requester_name)
-        elif response == 2:
-            view_upcoming_events()
-        elif response == 3:
-            view_requests(id)
+        if choice == 1:
+            submit_event_request(user_id, requester_name)
+        elif choice == 2:
+            show_upcoming_events()
         else:
-            print("Invalid option. Please choose 0, 1, 2, or 3.")
+            display_events(
+                get_events_by_requester(user_id),
+                "No event requests found for your account.",
+            )
 
 
-def search_room(requester_id, requester_name):
-    #Schedule_event.search_rooms()
-    while True:
-        response = input("Would you like to submit a room request? (y/n): ").strip().lower()
-        if response == "y":
-            submit_request(requester_id, requester_name)
-            return
-        elif response == "n":
-            return
-        else:
-            print("Please enter y or n.")
-
-
-def read_text(prompt):
-    while True:
-        response = input(prompt).strip()
-        if response:
-            return response
-        print("Please enter a value.")
-
-
-def read_number(prompt):
-    while True:
-        try:
-            response = int(input(prompt))
-        except ValueError:
-            print("Please enter a valid number.")
-            continue
-        if response > 0:
-            return response
-        print("Please enter a positive number.")
-
-
-def submit_request(requester_id, requester_name):
+def submit_event_request(requester_id, requester_name):
     name = read_text("Event name: ")
     building = read_text("Building: ")
-    room = read_number("Room number: ")
+    room = read_positive_int("Room number: ")
+    event_datetime = read_future_datetime()
 
-    while True:
-        event_date = read_text("Event date (YYYY-MM-DD, e.g. 2026-12-26): ")
-        try:
-            parsed_date = datetime.strptime(event_date, "%Y-%m-%d").date()
-        except ValueError:
-            print("Please enter a valid date in YYYY-MM-DD format (year-month-day).")
-            continue
-
-        event_time = read_text("Event time (HH:MM, 24-hour): ")
-        try:
-            parsed_time = datetime.strptime(event_time, "%H:%M").time()
-        except ValueError:
-            print("Please enter a valid time in 24-hour HH:MM format, such as 14:30.")
-            continue
-
-        event_datetime = datetime.combine(parsed_date, parsed_time)
-        if event_datetime <= datetime.now():
-            print("Please enter a future date and time.")
-            continue
-        break
-
-    event = Schedule_event.Schedule_event(
+    event = Event(
         time=event_datetime.strftime("%H:%M"),
-        day_date=event_datetime.day,
-        day_month=event_datetime.month,
-        day_year=event_datetime.year,
+        day=event_datetime.day,
+        month=event_datetime.month,
+        year=event_datetime.year,
         building=building,
         room=room,
         name=name,
-        requester=requester_name,
-        requesterID=requester_id,
+        requester_id=requester_id,
+        requester_name=requester_name,
     )
-    conflict = Schedule_event.get_conflicting_event(Schedule_event.all_events, event)
+    conflict = get_conflicting_event(event)
     if conflict is not None:
-        print("That room is already booked at that date and time. Request not submitted.")
+        print(f"That room is already booked by event {conflict.id}. Request not submitted.")
         return
 
-    is_valid, reasons = event.submit()
-    if not is_valid:
+    valid, reasons = event.submit()
+    if not valid:
         print("Unable to submit the request:")
         for reason in reasons:
             print(reason)
         return
 
-    Schedule_event.all_events.append(event)
-    print("Room request submitted and is waiting for admin approval.")
-    return
+    events.append(event)
+    print(f"Event request {event.id} submitted and is waiting for admin approval.")
 
 
-def view_upcoming_events():
-    print("\nUpcoming Events")
-    found = False
-    for event in Schedule_event.all_events:
-        if event.approved != Schedule_event.Approval_Status.APPROVED:
-            continue
+def show_upcoming_events():
+    upcoming = []
+    for event in get_approved_events():
         try:
-            event_time = datetime.strptime(event.time, "%H:%M").time()
-            event_datetime = datetime(
-                event.day_year, event.day_month, event.day_date,
-                event_time.hour, event_time.minute,
+            event_datetime = datetime.strptime(
+                f"{event.year:04d}-{event.month:02d}-{event.day:02d} {event.time}",
+                "%Y-%m-%d %H:%M",
             )
-        except (TypeError, ValueError):
-            print("An approved event has an invalid date or time and cannot be displayed.")
+        except ValueError:
+            print(f"Event {event.id} has an invalid date or time and cannot be displayed.")
             continue
         if event_datetime > datetime.now():
-            print(event)
-            print("--------------")
-            found = True
-    if not found:
-        print("No upcoming events.")
-    return
-
-
-def view_requests(requester_id):
-    #shows only the logged-in user's own requests
-    print("\nRoom Requests")
-    found = False
-    for event in Schedule_event.all_events:
-        if event.requesterID == requester_id and event.approved != Schedule_event.Approval_Status.IN_PROGRESS:
-            print(event)
-            print("--------------")
-            found = True
-    if not found:
-        print("No room requests found.")
-    return
+            upcoming.append(event)
+    display_events(upcoming, "No upcoming approved events.")
